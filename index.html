@@ -1,0 +1,744 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>イベント・新キャラ実装カレンダー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #171a24;
+    --card: #262b3a;
+    --text: #f1efe8;
+    --text-dim: #a6abbd;
+    --border: #383e52;
+    --accent: #ffd166;
+    --shadow: 0 8px 24px rgba(0,0,0,0.35);
+
+    --c-zombie: #ef5350;
+    --c-farm: #66bb6a;
+    --c-fish: #42a5f5;
+    --c-treasure: #ffb300;
+    --c-run: #ab47bc;
+    --c-island: #26c6da;
+    --c-league: #ec407a;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f4f2ec;
+      --card: #ffffff;
+      --text: #232323;
+      --text-dim: #6b6b6b;
+      --border: #e2ded2;
+      --accent: #b5842a;
+      --shadow: 0 6px 18px rgba(60,50,20,0.12);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #171a24;
+    --card: #262b3a;
+    --text: #f1efe8;
+    --text-dim: #a6abbd;
+    --border: #383e52;
+    --accent: #ffd166;
+    --shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Noto Sans JP", -apple-system, "Hiragino Kaku Gothic ProN", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 14px 40px;
+  }
+
+  h1 {
+    font-family: "Zen Maru Gothic", "Noto Sans JP", sans-serif;
+    font-weight: 900;
+    font-size: 1.3rem;
+    margin: 0 0 4px;
+    letter-spacing: 0.02em;
+  }
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    margin: 0 0 14px;
+  }
+
+  .toggle-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .toggle-group {
+    display: flex;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .toggle-group button {
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-family: "Noto Sans JP", sans-serif;
+  }
+  .toggle-group button.active {
+    background: var(--accent);
+    color: #1a1a1a;
+  }
+  .toggle-group button:active { transform: scale(0.96); }
+
+  .status-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 16px 16px 14px;
+    box-shadow: var(--shadow);
+    margin-bottom: 18px;
+  }
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+  }
+  .status-row + .status-row {
+    border-top: 1px solid var(--border);
+  }
+  .dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-main {
+    flex: 1;
+    min-width: 0;
+  }
+  .status-label {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-bottom: 2px;
+    line-height: 1.3;
+  }
+  .status-value {
+    font-family: "Zen Maru Gothic", sans-serif;
+    font-weight: 700;
+    font-size: 1.0rem;
+  }
+  .status-sub {
+    font-size: 0.74rem;
+    color: var(--text-dim);
+    text-align: right;
+  }
+  .char-icon {
+    width: 14px; height: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .cal-nav button {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .cal-nav button:active { transform: scale(0.94); }
+  .month-label {
+    font-family: "Zen Maru Gothic", sans-serif;
+    font-weight: 700;
+    font-size: 1.0rem;
+  }
+
+  .weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+  .weekdays span:first-child { color: #e57373; }
+  .weekdays span:last-child { color: #64b5f6; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+  .cell {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 10px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 4px 5px 4px 8px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    border: 1px solid transparent;
+    overflow: hidden;
+  }
+  .cell.empty { visibility: hidden; }
+  .cell.today {
+    border: 2px solid var(--accent);
+  }
+  .cell .star {
+    position: absolute;
+    top: 3px;
+    right: 4px;
+    font-size: 0.68rem;
+  }
+  .cell .island-bar {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 5px;
+  }
+  .cell .island-bar.recruit {
+    background-image: repeating-linear-gradient(45deg, var(--rc) 0 3px, transparent 3px 6px);
+    opacity: 0.85;
+  }
+  .cell .paid-bar {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+  }
+
+  .legend {
+    margin-top: 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 14px 16px;
+  }
+  .legend h2 {
+    font-family: "Zen Maru Gothic", sans-serif;
+    font-size: 0.85rem;
+    margin: 14px 0 10px;
+    color: var(--text-dim);
+    font-weight: 700;
+  }
+  .legend h2:first-child { margin-top: 0; }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    padding: 4px 0;
+  }
+  .legend-chip {
+    width: 14px; height: 14px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .legend-chip.bar {
+    height: 5px;
+    border-radius: 3px;
+  }
+  .legend-note {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 0.74rem;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ===== 横幅が広い画面（PCなど）は2カラム：左=カレンダーまで／右=凡例 ===== */
+  @media (min-width: 900px) {
+    .app {
+      max-width: 1120px;
+      padding: 14px 20px 16px;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 24px;
+      align-items: start;
+    }
+    .col-right .legend { margin-top: 0; }
+
+    /* スクロール無しで収めるため、各パーツを少しコンパクトにする */
+    h1 { font-size: 1.15rem; }
+    .subtitle { margin-bottom: 8px; }
+    .toggle-bar { margin-bottom: 10px; }
+    .status-card { padding: 8px 14px; margin-bottom: 10px; }
+    .status-row { padding: 5px 0; }
+    .cal-nav { margin-bottom: 6px; }
+    .cal-nav button { width: 30px; height: 30px; }
+
+    /* セルの高さは画面の高さに合わせて自動調整（正方形をやめる） */
+    .cell {
+      aspect-ratio: auto;
+      height: clamp(42px, calc((100vh - 360px) / 6), 84px);
+    }
+    .legend { padding: 12px 14px; }
+    .legend-item { padding: 2px 0; }
+    .legend h2 { margin: 10px 0 6px; }
+    .legend-note { margin-top: 8px; padding-top: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+<div class="layout">
+<div class="col-left">
+  <h1 id="title"></h1>
+  <p class="subtitle" id="subtitle"></p>
+
+  <div class="toggle-bar">
+    <div class="toggle-group" id="tzGroup"></div>
+    <div class="toggle-group" id="langGroup"></div>
+  </div>
+
+  <div class="status-card" id="statusCard"></div>
+
+  <div class="cal-nav">
+    <button id="prevBtn">◀</button>
+    <span class="month-label" id="monthLabel"></span>
+    <button id="nextBtn">▶</button>
+  </div>
+  <div class="weekdays" id="weekdaysRow"></div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="col-right">
+  <div class="legend">
+    <h2 id="legendH1"></h2>
+    <div id="legendList"></div>
+    <h2 id="legendH2"></h2>
+    <div id="legendList2"></div>
+    <h2 id="legendH3"></h2>
+    <div id="legendList3"></div>
+    <div class="legend-note" id="legendNote1"></div>
+    <div class="legend-note" id="legendNote2"></div>
+    <div class="legend-note" id="legendNote3"></div>
+  </div>
+</div>
+</div>
+</div>
+
+<script>
+  // ══════════════════ 多言語・時刻表示 設定 ══════════════════
+  const LANGS = ['ja', 'en', 'ru', 'zh'];
+  const LANG_BTN_LABEL = { ja: '日本語', en: 'EN', ru: 'RU', zh: '中文' };
+  let currentLang = 'ja';
+  let currentTZ = 'JST'; // 'JST' or 'UTC'
+
+  // JSTの時刻をUTCに変換（日付またぎは今回の用途では発生しない）
+  function tzHour(jstHour) {
+    return currentTZ === 'UTC' ? (jstHour - 9 + 24) % 24 : jstHour;
+  }
+  function fmtHour(jstHour) {
+    return `${tzHour(jstHour)}:00 ${currentTZ}`;
+  }
+
+  const I18N = {
+    title: { ja: '🗓️ イベント・新キャラ カレンダー', en: '🗓️ Event & New Character Calendar', ru: '🗓️ Календарь событий и персонажей', zh: '🗓️ 活动与新角色日历' },
+    subtitle: { ja: '開催中のイベントと新キャラ実装日をひと目で確認', en: 'See ongoing events and new character release dates at a glance', ru: 'Текущие события и даты выхода новых персонажей', zh: '一目了然查看当前活动与新角色上线日期' },
+    statusLabel1: { ja: '開催中イベント', en: 'Ongoing Event', ru: 'Текущее событие', zh: '当前活动' },
+    statusLabel2: { ja: '開催中のトレジャー', en: 'Ongoing Gold Rush', ru: 'Текущий Gold Rush', zh: '当前 Gold Rush' },
+    recruitLabel: { ja: 'チーム募集期間', en: 'Team Recruitment', ru: 'Набор команды', zh: '组队招募期' },
+    nextLabel: { ja: '次の新キャラ実装', en: 'Next New Character', ru: 'Следующий новый персонаж', zh: '下一位新角色' },
+    todayRelease: { ja: '本日実装日！', en: 'Releasing today!', ru: 'Выходит сегодня!', zh: '今日实装！' },
+    battleStartsTomorrow: { ja: '明日から本戦開始', en: 'Battle starts tomorrow', ru: 'Бой начинается завтра', zh: '明天开战' },
+    legendH1: { ja: 'メインイベント（3日間ローテーション）', en: 'Main Events (3-day rotation)', ru: 'Основные события (ротация 3 дня)', zh: '主要活动（3天轮换）' },
+    legendH2: { ja: 'アイランド系イベント（週替わり）', en: 'Island-type Events (weekly)', ru: 'Островные события (еженедельно)', zh: '海岛系活动（每周轮换）' },
+    legendNote2: { ja: 'セル下の色帯＝アイランド系。斜線＝チーム募集日（本戦は翌日から）', en: 'Bottom bar = Island event. Stripes = recruitment day (battle starts next day)', ru: 'Полоса внизу = островное событие. Штрихи = день набора (бой — на след. день)', zh: '底部色条＝海岛系活动。斜纹＝组队招募日（次日开战）' },
+    statusLabel3: { ja: '開催中の課金イベント', en: 'Ongoing Paid Event', ru: 'Текущее платное событие', zh: '当前付费活动' },
+    legendH3: { ja: '課金イベント（3日間ローテーション）', en: 'Paid Events (3-day rotation)', ru: 'Платные события (ротация 3 дня)', zh: '付费活动（3天轮换）' },
+    legendNote3: { ja: 'セル左端の縦帯＝課金イベント', en: 'Left edge bar = Paid event', ru: 'Полоса слева = платное событие', zh: '左侧竖条＝付费活动' },
+    paidNone: { ja: '開催情報なし', en: 'No data', ru: 'Нет данных', zh: '暂无信息' },
+    prevMonth: { ja: '前の月', en: 'Previous month', ru: 'Пред. месяц', zh: '上个月' },
+    nextMonth: { ja: '次の月', en: 'Next month', ru: 'След. месяц', zh: '下个月' },
+  };
+  function t(key) { return I18N[key][currentLang]; }
+
+  const EVENT_NAMES_I18N = {
+    ja: ["ゾンビ包囲網", "魔法の農場", "釣り大会", "お宝探し", "ランニング"],
+    en: ["Zombie Siege", "Magic Farm", "Fishing Tournament", "Treasure Hunt", "Running"],
+    ru: ["Осада зомби", "Волшебная ферма", "Рыболовный турнир", "Охота за сокровищами", "Забег"],
+    zh: ["丧尸围城", "魔法农场", "钓鱼大赛", "寻宝", "跑步"],
+  };
+  const ISLAND_NAMES_I18N = {
+    ja: ["アイランドトレジャー", "アイランドトレジャー", "アイランドトレジャー", "リーグ戦"],
+    en: ["Island Treasure", "Island Treasure", "Island Treasure", "League Battle"],
+    ru: ["Остров сокровищ", "Остров сокровищ", "Остров сокровищ", "Лига"],
+    zh: ["海岛寻宝", "海岛寻宝", "海岛寻宝", "联赛"],
+  };
+  const PAID_NAMES_I18N = {
+    ja: ["貯金箱", "フェスセール", "ルーレット", "餌付け"],
+    en: ["Piggy Bank", "Festival Sale", "Roulette", "Feeding"],
+    ru: ["Копилка", "Фестивальная распродажа", "Рулетка", "Кормление"],
+    zh: ["存钱罐", "庆典特卖", "轮盘", "喂食"],
+  };
+  const WEEKDAYS_I18N = {
+    ja: ['日', '月', '火', '水', '木', '金', '土'],
+    en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    ru: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+    zh: ['日', '一', '二', '三', '四', '五', '六'],
+  };
+  const WEDNESDAY_I18N = { ja: '水曜', en: 'Wed', ru: 'ср', zh: '周三' };
+  const MONTH_NAMES_I18N = {
+    ja: null, // 「○年○月」形式なので月名配列は不要
+    en: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+    ru: ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'],
+    zh: null,
+  };
+
+  function nextEventText(n, name) {
+    if (currentLang === 'ja') return `あと${n}日で「${name}」へ`;
+    if (currentLang === 'en') return `${n} day(s) until "${name}"`;
+    if (currentLang === 'ru') return `Через ${n} дн. — «${name}»`;
+    return `还有${n}天进入「${name}」`;
+  }
+  function islandBattleSub(n) {
+    if (currentLang === 'ja') return `あと${n}日でチーム募集期間へ`;
+    if (currentLang === 'en') return `${n} day(s) until recruitment`;
+    if (currentLang === 'ru') return `Через ${n} дн. — набор команды`;
+    return `还有${n}天进入组队招募期`;
+  }
+  function nextIslandValue(name) {
+    if (currentLang === 'ja') return `次は「${name}」`;
+    if (currentLang === 'en') return `Next: ${name}`;
+    if (currentLang === 'ru') return `Далее: ${name}`;
+    return `下一场：${name}`;
+  }
+  function charCountdownText(n) {
+    const wedTime = fmtHour(18);
+    if (n === 0) return t('todayRelease');
+    if (currentLang === 'ja') return `${n}日後（${WEDNESDAY_I18N.ja} ${wedTime}頃）`;
+    if (currentLang === 'en') return `in ${n} day(s) (${WEDNESDAY_I18N.en} ~${wedTime})`;
+    if (currentLang === 'ru') return `через ${n} дн. (${WEDNESDAY_I18N.ru}, ~${wedTime})`;
+    return `${n}天后（${WEDNESDAY_I18N.zh} ${wedTime}左右）`;
+  }
+  function legendNote1Text() {
+    const wedTime = fmtHour(18);
+    if (currentLang === 'ja') return `🆕 新キャラ実装日（2週間ごと・${WEDNESDAY_I18N.ja} ${wedTime}頃）`;
+    if (currentLang === 'en') return `🆕 New character release day (every 2 weeks, ${WEDNESDAY_I18N.en} ~${wedTime})`;
+    if (currentLang === 'ru') return `🆕 День выхода нового персонажа (раз в 2 нед., ${WEDNESDAY_I18N.ru} ~${wedTime})`;
+    return `🆕 新角色上线日（每2周一次，${WEDNESDAY_I18N.zh} ${wedTime}左右）`;
+  }
+
+  // ══════════════════ メインイベント（5種・3日間ローテーション） ══════════════════
+  const EVENT_DURATION_DAYS = 3;
+  const CYCLE_LENGTH_DAYS = 5 * EVENT_DURATION_DAYS; // 15日周期
+  const EVENT_ANCHOR = new Date(2026, 8, 15); // 9/15 9:00 からゾンビ包囲網が開始
+
+  // ══════════════════ 新キャラ実装（2週間おき・水曜18時JST） ══════════════════
+  const CHAR_ANCHOR = new Date(2026, 8, 9); // 9/9(水)実装済みが基準
+  const CHAR_INTERVAL_DAYS = 14;
+
+  // ══════════════════ アイランド系イベント ══════════════════
+  // 1〜3週目：アイランドトレジャー（本戦：木曜〜翌週火曜=6日間）／4週目：リーグ戦
+  // 本戦と本戦の間（水曜9:00〜木曜8:59JST）はチーム募集期間
+  const ISLAND_BATTLE_DAYS = 6;
+  const ISLAND_ROUND_SPACING = 7;
+  const ISLAND_CYCLE_DAYS = 4 * ISLAND_ROUND_SPACING; // 28日周期
+  const LEAGUE_ANCHOR = new Date(2026, 9, 1); // リーグ戦=10/1(木)9:00 開催を基準
+  const ISLAND_ANCHOR = new Date(LEAGUE_ANCHOR.getTime() - 3 * ISLAND_ROUND_SPACING * 86400000);
+
+  // ══════════════════ 課金イベント（4種・3日間ローテーション） ══════════════════
+  // 順番：貯金箱 → フェスセール → ルーレット → 餌付け（メモの開始日から割り出した順）
+  const PAID_DURATION_DAYS = 3;
+  const PAID_EVENT_COUNT = 4;
+  const PAID_CYCLE_DAYS = PAID_DURATION_DAYS * PAID_EVENT_COUNT; // 12日周期
+  const PAID_ANCHOR = new Date(2026, 9, 7); // 10/7 に貯金箱が開始
+  const PAID_COLORS = ['#ff7043', '#fbc02d', '#5c6bc0', '#26a69a'];
+  // 基準日より前は情報がないので -1 を返す
+  function getPaidIndex(date) {
+    const diff = dayDiff(PAID_ANCHOR, atMidnight(date));
+    if (diff < 0) return -1;
+    return Math.floor((diff % PAID_CYCLE_DAYS) / PAID_DURATION_DAYS);
+  }
+
+  function dayDiff(from, to) { return Math.round((to - from) / 86400000); }
+  function atMidnight(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function getEventIndex(date) {
+    const diff = dayDiff(EVENT_ANCHOR, atMidnight(date));
+    const mod = ((diff % CYCLE_LENGTH_DAYS) + CYCLE_LENGTH_DAYS) % CYCLE_LENGTH_DAYS;
+    return Math.floor(mod / EVENT_DURATION_DAYS);
+  }
+  function isCharDay(date) {
+    const diff = dayDiff(CHAR_ANCHOR, atMidnight(date));
+    return diff >= 0 && diff % CHAR_INTERVAL_DAYS === 0;
+  }
+  function getIslandInfo(date) {
+    const diff = dayDiff(ISLAND_ANCHOR, atMidnight(date));
+    const mod = ((diff % ISLAND_CYCLE_DAYS) + ISLAND_CYCLE_DAYS) % ISLAND_CYCLE_DAYS;
+    const roundNum = Math.floor(mod / ISLAND_ROUND_SPACING);
+    const posInRound = mod % ISLAND_ROUND_SPACING;
+    return { roundNum, posInRound, isRecruit: posInRound === ISLAND_BATTLE_DAYS };
+  }
+
+  const today = new Date();
+  let viewYear = today.getFullYear();
+  let viewMonth = today.getMonth();
+
+  function isSameDay(a, b) {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+
+  function monthLabelText(year, month) {
+    if (currentLang === 'en') return `${MONTH_NAMES_I18N.en[month]} ${year}`;
+    if (currentLang === 'ru') return `${MONTH_NAMES_I18N.ru[month]} ${year}`;
+    return `${year}年${month + 1}月`;
+  }
+
+  function renderStatus() {
+    const el = document.getElementById('statusCard');
+    const EVENT_NAMES = EVENT_NAMES_I18N[currentLang];
+    const ISLAND_NAMES = ISLAND_NAMES_I18N[currentLang];
+    const EVENT_COLORS = ["var(--c-zombie)", "var(--c-farm)", "var(--c-fish)", "var(--c-treasure)", "var(--c-run)"];
+    const ISLAND_COLORS = ["var(--c-island)", "var(--c-island)", "var(--c-island)", "var(--c-league)"];
+
+    const idx = getEventIndex(today);
+    const diff = dayDiff(EVENT_ANCHOR, atMidnight(today));
+    const mod = ((diff % CYCLE_LENGTH_DAYS) + CYCLE_LENGTH_DAYS) % CYCLE_LENGTH_DAYS;
+    const posInEvent = mod % EVENT_DURATION_DAYS;
+    const daysUntilNextEvent = EVENT_DURATION_DAYS - posInEvent;
+    const nextIdx = (idx + 1) % EVENT_NAMES.length;
+
+    const charDiff = dayDiff(CHAR_ANCHOR, atMidnight(today));
+    const charRem = ((charDiff % CHAR_INTERVAL_DAYS) + CHAR_INTERVAL_DAYS) % CHAR_INTERVAL_DAYS;
+    const daysUntilChar = charRem === 0 ? 0 : CHAR_INTERVAL_DAYS - charRem;
+
+    // 課金イベントの表示内容を組み立てる（基準日より前は「情報なし」）
+    const PAID_NAMES = PAID_NAMES_I18N[currentLang];
+    const paidIdx = getPaidIndex(today);
+    let paidColor = 'var(--border)', paidValue = t('paidNone'), paidSub = '';
+    if (paidIdx >= 0) {
+      const paidDiff = dayDiff(PAID_ANCHOR, atMidnight(today));
+      const paidDaysLeft = PAID_DURATION_DAYS - (paidDiff % PAID_DURATION_DAYS);
+      const paidNext = (paidIdx + 1) % PAID_EVENT_COUNT;
+      paidColor = PAID_COLORS[paidIdx];
+      paidValue = PAID_NAMES[paidIdx];
+      paidSub = nextEventText(paidDaysLeft, PAID_NAMES[paidNext]);
+    }
+
+    const info = getIslandInfo(today);
+    let islandColor, islandLabel, islandValue, islandSub;
+    if (!info.isRecruit) {
+      islandColor = ISLAND_COLORS[info.roundNum];
+      islandLabel = t('statusLabel2');
+      islandValue = ISLAND_NAMES[info.roundNum];
+      islandSub = islandBattleSub(ISLAND_BATTLE_DAYS - info.posInRound);
+    } else {
+      const nextRound = (info.roundNum + 1) % ISLAND_NAMES.length;
+      islandColor = ISLAND_COLORS[nextRound];
+      islandLabel = t('recruitLabel');
+      islandValue = nextIslandValue(ISLAND_NAMES[nextRound]);
+      islandSub = t('battleStartsTomorrow');
+    }
+
+    el.innerHTML = `
+      <div class="status-row">
+        <div class="dot" style="background:${EVENT_COLORS[idx]}"></div>
+        <div class="status-main">
+          <div class="status-label">${t('statusLabel1')}</div>
+          <div class="status-value">${EVENT_NAMES[idx]}</div>
+        </div>
+        <div class="status-sub">${nextEventText(daysUntilNextEvent, EVENT_NAMES[nextIdx])}</div>
+      </div>
+      <div class="status-row">
+        <div class="dot" style="background:${islandColor}"></div>
+        <div class="status-main">
+          <div class="status-label">${islandLabel}</div>
+          <div class="status-value">${islandValue}</div>
+        </div>
+        <div class="status-sub">${islandSub}</div>
+      </div>
+      <div class="status-row">
+        <div class="dot" style="background:${paidColor}"></div>
+        <div class="status-main">
+          <div class="status-label">${t('statusLabel3')}</div>
+          <div class="status-value">${paidValue}</div>
+        </div>
+        <div class="status-sub">${paidSub}</div>
+      </div>
+      <div class="status-row">
+        <div class="char-icon">🆕</div>
+        <div class="status-main">
+          <div class="status-label">${t('nextLabel')}</div>
+          <div class="status-value">${charCountdownText(daysUntilChar)}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderCalendar() {
+    document.getElementById('monthLabel').textContent = monthLabelText(viewYear, viewMonth);
+
+    const weekdaysRow = document.getElementById('weekdaysRow');
+    weekdaysRow.innerHTML = WEEKDAYS_I18N[currentLang].map(w => `<span>${w}</span>`).join('');
+
+    const ISLAND_NAMES = ISLAND_NAMES_I18N[currentLang];
+    const EVENT_NAMES = EVENT_NAMES_I18N[currentLang];
+    const EVENT_COLORS = ["var(--c-zombie)", "var(--c-farm)", "var(--c-fish)", "var(--c-treasure)", "var(--c-run)"];
+    const ISLAND_COLORS = ["var(--c-island)", "var(--c-island)", "var(--c-island)", "var(--c-league)"];
+
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+
+    const firstDay = new Date(viewYear, viewMonth, 1);
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const startWeekday = firstDay.getDay();
+
+    for (let i = 0; i < startWeekday; i++) {
+      const empty = document.createElement('div');
+      empty.className = 'cell empty';
+      grid.appendChild(empty);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(viewYear, viewMonth, d);
+      const idx = getEventIndex(date);
+      const info = getIslandInfo(date);
+      const paidIdx = getPaidIndex(date);
+      const cell = document.createElement('div');
+      cell.className = 'cell' + (isSameDay(date, today) ? ' today' : '');
+      cell.style.background = `color-mix(in srgb, ${EVENT_COLORS[idx]} 22%, transparent)`;
+      cell.style.color = 'var(--text)';
+
+      let islandBarHtml, tooltipIsland;
+      if (!info.isRecruit) {
+        islandBarHtml = `<span class="island-bar" style="background:${ISLAND_COLORS[info.roundNum]}"></span>`;
+        tooltipIsland = ISLAND_NAMES[info.roundNum];
+      } else {
+        const nextRound = (info.roundNum + 1) % ISLAND_NAMES.length;
+        islandBarHtml = `<span class="island-bar recruit" style="--rc:${ISLAND_COLORS[nextRound]}"></span>`;
+        tooltipIsland = t('recruitLabel') + ' → ' + ISLAND_NAMES[nextRound];
+      }
+
+      const paidBarHtml = paidIdx >= 0
+        ? `<span class="paid-bar" style="background:${PAID_COLORS[paidIdx]}"></span>` : '';
+      const paidTitle = paidIdx >= 0 ? ' / ' + PAID_NAMES_I18N[currentLang][paidIdx] : '';
+
+      cell.title = EVENT_NAMES[idx] + ' / ' + tooltipIsland + paidTitle + (isCharDay(date) ? ' / 🆕' : '');
+      cell.innerHTML = `${d}${isCharDay(date) ? '<span class="star">🆕</span>' : ''}${islandBarHtml}${paidBarHtml}`;
+      grid.appendChild(cell);
+    }
+  }
+
+  function renderLegend() {
+    document.getElementById('legendH1').textContent = t('legendH1');
+    document.getElementById('legendH2').textContent = t('legendH2');
+    document.getElementById('legendH3').textContent = t('legendH3');
+    document.getElementById('legendNote3').textContent = t('legendNote3');
+    document.getElementById('legendNote1').textContent = legendNote1Text();
+    document.getElementById('legendNote2').textContent = t('legendNote2');
+
+    const EVENT_NAMES = EVENT_NAMES_I18N[currentLang];
+    const ISLAND_NAMES = ISLAND_NAMES_I18N[currentLang];
+    const EVENT_COLORS = ["var(--c-zombie)", "var(--c-farm)", "var(--c-fish)", "var(--c-treasure)", "var(--c-run)"];
+    const ISLAND_COLORS = ["var(--c-island)", "var(--c-island)", "var(--c-island)", "var(--c-league)"];
+
+    document.getElementById('legendList').innerHTML = EVENT_NAMES.map((name, i) => `
+      <div class="legend-item">
+        <div class="legend-chip" style="background:${EVENT_COLORS[i]}"></div>
+        <span>${name}</span>
+      </div>
+    `).join('');
+
+    const seen = new Set();
+    let html2 = '';
+    ISLAND_NAMES.forEach((name, i) => {
+      if (seen.has(name)) return;
+      seen.add(name);
+      html2 += `
+        <div class="legend-item">
+          <div class="legend-chip bar" style="background:${ISLAND_COLORS[i]}"></div>
+          <span>${name}</span>
+        </div>
+      `;
+    });
+    document.getElementById('legendList2').innerHTML = html2;
+
+    document.getElementById('legendList3').innerHTML = PAID_NAMES_I18N[currentLang].map((name, i) => `
+      <div class="legend-item">
+        <div class="legend-chip" style="background:${PAID_COLORS[i]}"></div>
+        <span>${name}</span>
+      </div>
+    `).join('');
+  }
+
+  function renderStaticTexts() {
+    document.getElementById('title').textContent = t('title');
+    document.getElementById('subtitle').textContent = t('subtitle');
+    document.getElementById('prevBtn').setAttribute('aria-label', t('prevMonth'));
+    document.getElementById('nextBtn').setAttribute('aria-label', t('nextMonth'));
+  }
+
+  function renderToggles() {
+    const tzGroup = document.getElementById('tzGroup');
+    tzGroup.innerHTML = ['JST', 'UTC'].map(tz =>
+      `<button data-tz="${tz}" class="${currentTZ === tz ? 'active' : ''}">${tz}</button>`
+    ).join('');
+    tzGroup.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => { currentTZ = btn.dataset.tz; renderAll(); });
+    });
+
+    const langGroup = document.getElementById('langGroup');
+    langGroup.innerHTML = LANGS.map(l =>
+      `<button data-lang="${l}" class="${currentLang === l ? 'active' : ''}">${LANG_BTN_LABEL[l]}</button>`
+    ).join('');
+    langGroup.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => { currentLang = btn.dataset.lang; renderAll(); });
+    });
+  }
+
+  function renderAll() {
+    renderStaticTexts();
+    renderToggles();
+    renderStatus();
+    renderCalendar();
+    renderLegend();
+  }
+
+  document.getElementById('prevBtn').addEventListener('click', () => {
+    viewMonth--;
+    if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+    renderCalendar();
+  });
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    viewMonth++;
+    if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+    renderCalendar();
+  });
+
+  renderAll();
+</script>
+</body>
+</html>
+
+</body></html>
