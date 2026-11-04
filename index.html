@@ -23,6 +23,7 @@
     --c-fish: #42a5f5;
     --c-treasure: #ffb300;
     --c-run: #ab47bc;
+    --c-ruins: #8d6e63;
     --c-island: #26c6da;
     --c-league: #ec407a;
   }
@@ -274,6 +275,89 @@
     gap: 6px;
   }
 
+  /* ===== 日付タップで出る詳細ポップアップ ===== */
+  .grid-wrap { position: relative; }
+  .cell:not(.empty) { cursor: pointer; }
+  .cell:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .cell.selected { outline: 2px solid var(--text); outline-offset: -2px; }
+  .day-popup {
+    position: absolute;
+    z-index: 30;
+    width: min(260px, calc(100vw - 28px));
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.4);
+    padding: 10px 12px 6px;
+    font-size: 0.8rem;
+  }
+  .day-popup[hidden] { display: none; }
+  /* ポップアップの下に隠れた日付も押せるよう、本体はクリックを素通りさせる（×だけ押せる） */
+  .day-popup { pointer-events: none; }
+  .pop-close { pointer-events: auto; }
+  .pop-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: "Zen Maru Gothic", sans-serif;
+    font-weight: 700;
+    font-size: 0.92rem;
+    margin-bottom: 4px;
+  }
+  .pop-today {
+    font-size: 0.64rem;
+    background: var(--accent);
+    color: #1a1a1a;
+    border-radius: 6px;
+    padding: 1px 6px;
+  }
+  .pop-close {
+    margin-left: auto;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 4px;
+  }
+  .pop-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 6px 0;
+    border-top: 1px solid var(--border);
+  }
+  .pop-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+  .pop-emoji {
+    width: 10px;
+    margin-top: 3px;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+  }
+  .pop-label { font-size: 0.66rem; color: var(--text-dim); }
+  .pop-name {
+    font-family: "Zen Maru Gothic", sans-serif;
+    font-weight: 700;
+    font-size: 0.92rem;
+  }
+  .pop-name.dim { color: var(--text-dim); font-weight: 500; }
+  .pop-sub { font-size: 0.72rem; color: var(--text-dim); }
+  .pop-badge {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 0.64rem;
+    padding: 0 6px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+  }
+
   /* ===== 横幅が広い画面（PCなど）は2カラム：左=カレンダーまで／右=凡例 ===== */
   @media (min-width: 900px) {
     .app {
@@ -329,7 +413,10 @@
     <button id="nextBtn">▶</button>
   </div>
   <div class="weekdays" id="weekdaysRow"></div>
-  <div class="grid" id="grid"></div>
+  <div class="grid-wrap" id="gridWrap">
+    <div class="grid" id="grid"></div>
+    <div class="day-popup" id="dayPopup" role="dialog" hidden></div>
+  </div>
 </div>
 
 <div class="col-right">
@@ -379,16 +466,23 @@
     legendH3: { ja: '課金イベント（3日間ローテーション）', en: 'Paid Events (3-day rotation)', ru: 'Платные события (ротация 3 дня)', zh: '付费活动（3天轮换）' },
     legendNote3: { ja: 'セル左端の縦帯＝課金イベント', en: 'Left edge bar = Paid event', ru: 'Полоса слева = платное событие', zh: '左侧竖条＝付费活动' },
     paidNone: { ja: '開催情報なし', en: 'No data', ru: 'Нет данных', zh: '暂无信息' },
+    popMain: { ja: 'イベント', en: 'Event', ru: 'Событие', zh: '活动' },
+    popIsland: { ja: 'トレジャー', en: 'Gold Rush', ru: 'Gold Rush', zh: 'Gold Rush' },
+    popPaid: { ja: '課金イベント', en: 'Paid Event', ru: 'Платное событие', zh: '付费活动' },
+    popNoInfo: { ja: '情報なし', en: 'No data', ru: 'Нет данных', zh: '暂无信息' },
+    popNewChar: { ja: '新キャラ実装', en: 'New character', ru: 'Новый персонаж', zh: '新角色上线' },
+    popToday: { ja: '今日', en: 'Today', ru: 'Сегодня', zh: '今天' },
+    popClose: { ja: '閉じる', en: 'Close', ru: 'Закрыть', zh: '关闭' },
     prevMonth: { ja: '前の月', en: 'Previous month', ru: 'Пред. месяц', zh: '上个月' },
     nextMonth: { ja: '次の月', en: 'Next month', ru: 'След. месяц', zh: '下个月' },
   };
   function t(key) { return I18N[key][currentLang]; }
 
   const EVENT_NAMES_I18N = {
-    ja: ["ゾンビ包囲網", "魔法の農場", "釣り大会", "お宝探し", "ランニング"],
-    en: ["Zombie Siege", "Magic Farm", "Fishing Tournament", "Treasure Hunt", "Running"],
-    ru: ["Осада зомби", "Волшебная ферма", "Рыболовный турнир", "Охота за сокровищами", "Забег"],
-    zh: ["丧尸围城", "魔法农场", "钓鱼大赛", "寻宝", "跑步"],
+    ja: ["ゾンビ包囲網", "魔法の農場", "釣り大会", "お宝探し", "ラフトレース", "遺跡探検"],
+    en: ["Zombie Siege", "Magic Farm", "Fishing Tournament", "Treasure Hunt", "Raft Race", "Ruins Exploration"],
+    ru: ["Осада зомби", "Волшебная ферма", "Рыболовный турнир", "Охота за сокровищами", "Гонка на плотах", "Исследование руин"],
+    zh: ["丧尸围城", "魔法农场", "钓鱼大赛", "寻宝", "木筏竞速", "遗迹探险"],
   };
   const ISLAND_NAMES_I18N = {
     ja: ["アイランドトレジャー", "アイランドトレジャー", "アイランドトレジャー", "リーグ戦"],
@@ -435,7 +529,7 @@
     return `下一场：${name}`;
   }
   function charCountdownText(n) {
-    const wedTime = fmtHour(18);
+    const wedTime = fmtHour(CHAR_RELEASE_HOUR_JST);
     if (n === 0) return t('todayRelease');
     if (currentLang === 'ja') return `${n}日後（${WEDNESDAY_I18N.ja} ${wedTime}頃）`;
     if (currentLang === 'en') return `in ${n} day(s) (${WEDNESDAY_I18N.en} ~${wedTime})`;
@@ -443,7 +537,7 @@
     return `${n}天后（${WEDNESDAY_I18N.zh} ${wedTime}左右）`;
   }
   function legendNote1Text() {
-    const wedTime = fmtHour(18);
+    const wedTime = fmtHour(CHAR_RELEASE_HOUR_JST);
     if (currentLang === 'ja') return `🆕 新キャラ実装日（2週間ごと・${WEDNESDAY_I18N.ja} ${wedTime}頃）`;
     if (currentLang === 'en') return `🆕 New character release day (every 2 weeks, ${WEDNESDAY_I18N.en} ~${wedTime})`;
     if (currentLang === 'ru') return `🆕 День выхода нового персонажа (раз в 2 нед., ${WEDNESDAY_I18N.ru} ~${wedTime})`;
@@ -452,8 +546,27 @@
 
   // ══════════════════ メインイベント（5種・3日間ローテーション） ══════════════════
   const EVENT_DURATION_DAYS = 3;
-  const CYCLE_LENGTH_DAYS = 5 * EVENT_DURATION_DAYS; // 15日周期
-  const EVENT_ANCHOR = new Date(2026, 8, 15); // 9/15 9:00 からゾンビ包囲網が開始
+  const EVENT_START_HOUR_JST = 9;     // イベントの開始時刻（JST）
+  const CHAR_RELEASE_HOUR_JST = 18;   // 新キャラ実装の時刻（JST・目安）
+  const POPUP_GAP_PX = 6;             // ポップアップとセルの間のすき間
+  const CYCLE_LENGTH_DAYS = 5 * EVENT_DURATION_DAYS; // 旧ローテーションの周期（15日）。3日ブロックの位置計算用
+
+  // イベント番号（EVENT_NAMES_I18N と EVENT_COLORS の添字と共通）
+  // ※ ランニングは名称変更でラフトレースになったため、過去分もラフトレースとして表示する
+  const EVENT_ID = { ZOMBIE: 0, FARM: 1, FISH: 2, TREASURE: 3, RAFT: 4, RUINS: 5 };
+  const EVENT_COLORS = [
+    "var(--c-zombie)", "var(--c-farm)", "var(--c-fish)", "var(--c-treasure)",
+    "var(--c-run)", "var(--c-ruins)",
+  ];
+
+  // 旧ローテーション（〜11/4）：9/15 9:00 からゾンビ包囲網が開始
+  const OLD_ROTATION = [EVENT_ID.ZOMBIE, EVENT_ID.FARM, EVENT_ID.FISH, EVENT_ID.TREASURE, EVENT_ID.RAFT];
+  const OLD_ROTATION_ANCHOR = new Date(2026, 8, 15);
+  // 新ローテーション（11/5〜）：アップデートで遺跡探検が追加（6種・18日周期）。11/5 から釣り大会が開始
+  const NEW_ROTATION = [EVENT_ID.FISH, EVENT_ID.TREASURE, EVENT_ID.RAFT, EVENT_ID.RUINS, EVENT_ID.ZOMBIE, EVENT_ID.FARM];
+  const NEW_ROTATION_ANCHOR = new Date(2026, 10, 5);
+  // 3日ブロックの区切り位置の計算用（新旧とも同じ区切りに揃っている）
+  const EVENT_ANCHOR = OLD_ROTATION_ANCHOR;
 
   // ══════════════════ 新キャラ実装（2週間おき・水曜18時JST） ══════════════════
   const CHAR_ANCHOR = new Date(2026, 8, 9); // 9/9(水)実装済みが基準
@@ -484,10 +597,16 @@
 
   function dayDiff(from, to) { return Math.round((to - from) / 86400000); }
   function atMidnight(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  // その日に開催中のメインイベント番号を返す（11/5以降は新ローテーション）
   function getEventIndex(date) {
-    const diff = dayDiff(EVENT_ANCHOR, atMidnight(date));
-    const mod = ((diff % CYCLE_LENGTH_DAYS) + CYCLE_LENGTH_DAYS) % CYCLE_LENGTH_DAYS;
-    return Math.floor(mod / EVENT_DURATION_DAYS);
+    const day = atMidnight(date);
+    const isNew = dayDiff(NEW_ROTATION_ANCHOR, day) >= 0;
+    const rotation = isNew ? NEW_ROTATION : OLD_ROTATION;
+    const anchor = isNew ? NEW_ROTATION_ANCHOR : OLD_ROTATION_ANCHOR;
+    const diff = dayDiff(anchor, day);
+    const cycle = rotation.length * EVENT_DURATION_DAYS; // 旧=15日 / 新=18日
+    const mod = ((diff % cycle) + cycle) % cycle;
+    return rotation[Math.floor(mod / EVENT_DURATION_DAYS)];
   }
   function isCharDay(date) {
     const diff = dayDiff(CHAR_ANCHOR, atMidnight(date));
@@ -519,7 +638,6 @@
     const el = document.getElementById('statusCard');
     const EVENT_NAMES = EVENT_NAMES_I18N[currentLang];
     const ISLAND_NAMES = ISLAND_NAMES_I18N[currentLang];
-    const EVENT_COLORS = ["var(--c-zombie)", "var(--c-farm)", "var(--c-fish)", "var(--c-treasure)", "var(--c-run)"];
     const ISLAND_COLORS = ["var(--c-island)", "var(--c-island)", "var(--c-island)", "var(--c-league)"];
 
     const idx = getEventIndex(today);
@@ -527,7 +645,9 @@
     const mod = ((diff % CYCLE_LENGTH_DAYS) + CYCLE_LENGTH_DAYS) % CYCLE_LENGTH_DAYS;
     const posInEvent = mod % EVENT_DURATION_DAYS;
     const daysUntilNextEvent = EVENT_DURATION_DAYS - posInEvent;
-    const nextIdx = (idx + 1) % EVENT_NAMES.length;
+    // 次のブロックの先頭日に開催されるイベントを調べる
+    const nextDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + daysUntilNextEvent);
+    const nextIdx = getEventIndex(nextDate);
 
     const charDiff = dayDiff(CHAR_ANCHOR, atMidnight(today));
     const charRem = ((charDiff % CHAR_INTERVAL_DAYS) + CHAR_INTERVAL_DAYS) % CHAR_INTERVAL_DAYS;
@@ -604,7 +724,6 @@
 
     const ISLAND_NAMES = ISLAND_NAMES_I18N[currentLang];
     const EVENT_NAMES = EVENT_NAMES_I18N[currentLang];
-    const EVENT_COLORS = ["var(--c-zombie)", "var(--c-farm)", "var(--c-fish)", "var(--c-treasure)", "var(--c-run)"];
     const ISLAND_COLORS = ["var(--c-island)", "var(--c-island)", "var(--c-island)", "var(--c-league)"];
 
     const grid = document.getElementById('grid');
@@ -644,11 +763,182 @@
         ? `<span class="paid-bar" style="background:${PAID_COLORS[paidIdx]}"></span>` : '';
       const paidTitle = paidIdx >= 0 ? ' / ' + PAID_NAMES_I18N[currentLang][paidIdx] : '';
 
-      cell.title = EVENT_NAMES[idx] + ' / ' + tooltipIsland + paidTitle + (isCharDay(date) ? ' / 🆕' : '');
+      // 日付セルは押せるボタンとして扱う（キーボード操作・読み上げ対応）
+      cell.setAttribute('role', 'button');
+      cell.tabIndex = 0;
+      cell.dataset.day = d;
+      cell.setAttribute('aria-label', dateLabel(date) + ' ' + EVENT_NAMES[idx]);
+      cell.addEventListener('click', (e) => { e.stopPropagation(); toggleDayPopup(cell, date); });
+      cell.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDayPopup(cell, date); }
+      });
       cell.innerHTML = `${d}${isCharDay(date) ? '<span class="star">🆕</span>' : ''}${islandBarHtml}${paidBarHtml}`;
       grid.appendChild(cell);
     }
+
+    // 言語・時刻表示の切り替えなどで再描画しても、選択中の日があればポップアップを出し直す
+    restoreDayPopup();
   }
+
+  // ══════════════════ 日付タップで出る詳細ポップアップ ══════════════════
+  let selectedDate = null; // 選択中の日（なければnull）
+
+  // 見出し用の日付表記
+  function dateLabel(date) {
+    const m = date.getMonth(), d = date.getDate(), wd = date.getDay();
+    const w = WEEKDAYS_I18N[currentLang][wd];
+    if (currentLang === 'ja') return `${m + 1}月${d}日（${w}）`;
+    if (currentLang === 'en') return `${w}, ${MONTH_NAMES_I18N.en[m].slice(0, 3)} ${d}`;
+    if (currentLang === 'ru') return `${w}, ${String(d).padStart(2, '0')}.${String(m + 1).padStart(2, '0')}`;
+    return `${m + 1}月${d}日 周${w}`;
+  }
+  function dayNText(n, total) {
+    if (currentLang === 'ja') return `${n}日目 / ${total}日間`;
+    if (currentLang === 'en') return `Day ${n} of ${total}`;
+    if (currentLang === 'ru') return `День ${n} из ${total}`;
+    return `第${n}天 / 共${total}天`;
+  }
+  function startTimeText() {
+    const h = fmtHour(EVENT_START_HOUR_JST);
+    if (currentLang === 'en') return `Starts ${h}`;
+    if (currentLang === 'ru') return `Старт ${h}`;
+    return currentLang === 'zh' ? `${h} 开始` : `${h} 開始`;
+  }
+  function approxTimeText(jstHour) {
+    const h = fmtHour(jstHour);
+    if (currentLang === 'ja') return `${h}頃`;
+    if (currentLang === 'zh') return `${h}左右`;
+    return `~${h}`;
+  }
+
+  // ポップアップ1行分のHTML（mark=色の丸 or 絵文字）
+  function popRow(markHtml, label, name, sub, badge, dim) {
+    return `
+      <div class="pop-row">
+        ${markHtml}
+        <div>
+          <div class="pop-label">${label}</div>
+          <div class="pop-name${dim ? ' dim' : ''}">${name}</div>
+          <div class="pop-sub">${sub}${badge ? `<span class="pop-badge">${badge}</span>` : ''}</div>
+        </div>
+      </div>`;
+  }
+  function dotHtml(color) { return `<span class="pop-dot" style="background:${color}"></span>`; }
+
+  // その日の開催内容（メイン／トレジャー／課金／新キャラ）をまとめたHTMLを作る
+  function buildDayPopupHtml(date) {
+    const day = atMidnight(date);
+    const EVENT_NAMES = EVENT_NAMES_I18N[currentLang];
+    const ISLAND_NAMES = ISLAND_NAMES_I18N[currentLang];
+    const ISLAND_COLORS = ["var(--c-island)", "var(--c-island)", "var(--c-island)", "var(--c-league)"];
+    const PAID_NAMES = PAID_NAMES_I18N[currentLang];
+    const mod = (a, n) => ((a % n) + n) % n;
+
+    // メインイベント（3日ブロックの何日目か）
+    const idx = getEventIndex(date);
+    const mainN = mod(dayDiff(EVENT_ANCHOR, day), EVENT_DURATION_DAYS) + 1;
+    let rows = popRow(dotHtml(EVENT_COLORS[idx]), t('popMain'), EVENT_NAMES[idx],
+      dayNText(mainN, EVENT_DURATION_DAYS), mainN === 1 ? startTimeText() : '');
+
+    // アイランド系（本戦は6日間／募集日は次の本戦の前日）
+    const info = getIslandInfo(date);
+    if (!info.isRecruit) {
+      rows += popRow(dotHtml(ISLAND_COLORS[info.roundNum]), t('popIsland'), ISLAND_NAMES[info.roundNum],
+        dayNText(info.posInRound + 1, ISLAND_BATTLE_DAYS), info.posInRound === 0 ? startTimeText() : '');
+    } else {
+      const next = (info.roundNum + 1) % ISLAND_NAMES.length;
+      rows += popRow(dotHtml(ISLAND_COLORS[next]), t('popIsland'), t('recruitLabel'),
+        nextIslandValue(ISLAND_NAMES[next]), startTimeText());
+    }
+
+    // 課金イベント（基準日より前は情報なし）
+    const paidIdx = getPaidIndex(date);
+    if (paidIdx >= 0) {
+      const paidN = mod(dayDiff(PAID_ANCHOR, day), PAID_DURATION_DAYS) + 1;
+      rows += popRow(dotHtml(PAID_COLORS[paidIdx]), t('popPaid'), PAID_NAMES[paidIdx], dayNText(paidN, PAID_DURATION_DAYS), '');
+    } else {
+      rows += popRow(dotHtml('var(--border)'), t('popPaid'), t('popNoInfo'), '', '', true);
+    }
+
+    // 新キャラ実装日
+    if (isCharDay(date)) {
+      rows += popRow('<span class="pop-emoji">🆕</span>', t('popNewChar'), approxTimeText(CHAR_RELEASE_HOUR_JST), '', '');
+    }
+
+    const todayTag = isSameDay(date, today) ? `<span class="pop-today">${t('popToday')}</span>` : '';
+    return `
+      <div class="pop-head">
+        <span>${dateLabel(date)}</span>${todayTag}
+        <button class="pop-close" aria-label="${t('popClose')}">×</button>
+      </div>${rows}`;
+  }
+
+  function hideDayPopup() {
+    selectedDate = null;
+    document.getElementById('dayPopup').hidden = true;
+    document.querySelectorAll('#grid .cell.selected').forEach(c => c.classList.remove('selected'));
+  }
+
+  // ポップアップを表示し、選んだ日の右上／左上に配置する
+  function showDayPopup(cell, date) {
+    selectedDate = date;
+    document.querySelectorAll('#grid .cell.selected').forEach(c => c.classList.remove('selected'));
+    cell.classList.add('selected');
+
+    const pop = document.getElementById('dayPopup');
+    const wrap = document.getElementById('gridWrap');
+    pop.innerHTML = buildDayPopupHtml(date);
+    pop.hidden = false;
+    pop.style.visibility = 'hidden'; // 大きさを測るため、いったん見えない状態で表示
+    const popW = pop.offsetWidth;
+    const popH = pop.offsetHeight;
+
+    const cellRect = cell.getBoundingClientRect();
+    const wrapRect = wrap.getBoundingClientRect();
+    // カレンダーの右半分の日 → 右端そろえ（左へ伸ばす）／左半分の日 → 左端そろえ（右へ伸ばす）
+    const isRightHalf = (cellRect.left + cellRect.width / 2) > (wrapRect.left + wrapRect.width / 2);
+    let left = isRightHalf ? cell.offsetLeft + cell.offsetWidth - popW : cell.offsetLeft;
+    left = Math.max(0, Math.min(left, wrap.offsetWidth - popW)); // 枠の外にはみ出さない
+
+    // 基本はセルの上。上に場所がなければ下に出す
+    const spaceAbove = cellRect.top;
+    const spaceBelow = window.innerHeight - cellRect.bottom;
+    const placeAbove = spaceAbove >= popH + POPUP_GAP_PX || spaceAbove >= spaceBelow;
+    const top = placeAbove
+      ? cell.offsetTop - popH - POPUP_GAP_PX
+      : cell.offsetTop + cell.offsetHeight + POPUP_GAP_PX;
+
+    pop.style.left = left + 'px';
+    pop.style.top = top + 'px';
+    pop.style.visibility = 'visible';
+  }
+
+  // 同じ日をもう一度押したら閉じる／別の日なら切り替える
+  function toggleDayPopup(cell, date) {
+    if (selectedDate && isSameDay(selectedDate, date)) hideDayPopup();
+    else showDayPopup(cell, date);
+  }
+
+  // 再描画後に、表示中の月に選択日があればポップアップを出し直す（なければ閉じる）
+  function restoreDayPopup() {
+    if (!selectedDate) { document.getElementById('dayPopup').hidden = true; return; }
+    if (selectedDate.getFullYear() !== viewYear || selectedDate.getMonth() !== viewMonth) { hideDayPopup(); return; }
+    const cell = document.querySelector(`#grid .cell[data-day="${selectedDate.getDate()}"]`);
+    if (cell) showDayPopup(cell, selectedDate); else hideDayPopup();
+  }
+
+  // 外側のクリック・Escキー・画面サイズ変更で閉じる
+  document.addEventListener('click', (e) => {
+    if (!selectedDate) return;
+    // クリック経路で判定する（切り替えボタンは再描画で作り直され、target単体では所属が分からなくなるため）
+    const path = e.composedPath();
+    const inToggleBar = path.some(n => n.classList && n.classList.contains('toggle-bar'));
+    if (inToggleBar) return; // JST/UTC・言語の切り替えでは閉じない（再描画で出し直す）
+    const inPopup = path.some(n => n.id === 'dayPopup');
+    if (e.target.closest('.pop-close') || !inPopup) hideDayPopup();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && selectedDate) hideDayPopup(); });
+  window.addEventListener('resize', () => { if (selectedDate) hideDayPopup(); });
 
   function renderLegend() {
     document.getElementById('legendH1').textContent = t('legendH1');
@@ -660,13 +950,12 @@
 
     const EVENT_NAMES = EVENT_NAMES_I18N[currentLang];
     const ISLAND_NAMES = ISLAND_NAMES_I18N[currentLang];
-    const EVENT_COLORS = ["var(--c-zombie)", "var(--c-farm)", "var(--c-fish)", "var(--c-treasure)", "var(--c-run)"];
     const ISLAND_COLORS = ["var(--c-island)", "var(--c-island)", "var(--c-island)", "var(--c-league)"];
 
-    document.getElementById('legendList').innerHTML = EVENT_NAMES.map((name, i) => `
+    document.getElementById('legendList').innerHTML = NEW_ROTATION.map(id => `
       <div class="legend-item">
-        <div class="legend-chip" style="background:${EVENT_COLORS[i]}"></div>
-        <span>${name}</span>
+        <div class="legend-chip" style="background:${EVENT_COLORS[id]}"></div>
+        <span>${EVENT_NAMES[id]}</span>
       </div>
     `).join('');
 
